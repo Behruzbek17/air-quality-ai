@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AirCare — Havo ifloslanishini aniqlovchi va maslahat beruvchi AI yordamchi</title>
+  <style>
+    :root{--primary:#0ea5a4;--muted:#6b7280}
+    body{font-family:Inter,system-ui,Arial,sans-serif;background:#f8fafc;margin:0;padding:24px;color:#0f172a}
+    .container{max-width:1000px;margin:0 auto}
+    header{background:linear-gradient(90deg,var(--primary),#06b6d4);color:#fff;padding:28px;border-radius:12px}
+    h1{margin:0;font-size:26px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:20px;margin-top:20px}
+    .card{background:#fff;padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(2,6,23,0.06)}
+    label{display:block;font-weight:600;margin-bottom:6px}
+    input[type=number],input[type=text],textarea,select{width:100%;padding:10px;border:1px solid #e6eef2;border-radius:8px;font-size:14px}
+    button{background:var(--primary);color:#fff;border:0;padding:10px 14px;border-radius:8px;cursor:pointer}
+    .small{font-size:13px;color:var(--muted)}
+    pre{background:#0b1220;color:#e6f6f6;padding:12px;border-radius:8px;overflow:auto}
+    .badge{display:inline-block;background:#ecfeff;color:#064e3b;padding:6px 10px;border-radius:999px;margin-right:8px;margin-top:6px}
+    footer{margin-top:18px;text-align:center;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>AirCare — Havo ifloslanishini aniqlovchi va maslahat beruvchi dastur</h1>
+      <p class="small">Hackathon uchun to'liq demo: Muammo→Yechim, Jamoa, Nima uchun, Yo'l xaritasi, Amalga oshirish + ishchi kod</p>
+    </header>
+
+    <div class="grid">
+      <div>
+        <div class="card">
+          <h3>Havo holatini tekshirish</h3>
+          <p class="small">AQI yoki PM2.5 qiymatini kiriting (test uchun qo'lda kiriting yoki API orqali real ma'lumot oling).</p>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label>AQIndex (AQI)</label>
+              <input id="aqi" type="number" min="0" max="500" placeholder="Masalan: 82" />
+            </div>
+            <div>
+              <label>PM2.5 (µg/m³) — ixtiyoriy</label>
+              <input id="pm25" type="number" min="0" step="0.1" placeholder="Masalan: 35.4" />
+            </div>
+          </div>
+
+          <div style="margin-top:12px;display:flex;gap:10px">
+            <button id="checkBtn">Tekshir va maslahat ber</button>
+            <button id="sampleBtn" style="background:#06b6d4">Namuna ma'lumot</button>
+          </div>
+
+          <div id="result" style="margin-top:14px"></div>
+
+          <hr style="margin:18px 0" />
+
+          <h4>Kichik AI misoli (mahalliy, rule-based + OpenAI integratsiya ko'rsatmasi)</h4>
+          <p class="small">Bu demo rule-based maslahat beradi va OpenAI orqali shaxsiylashtirish qanday amalga oshirilishini ko'rsatadi (kommentariyada).</p>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3>Full demo sahifa bo'limlari (hackathon talabiga mos)</h3>
+          <h4>1. Muammo → Yechim</h4>
+          <p class="small">Shahar va qishloq hududlarida havo ifloslanishi sog'liqka zarar yetkazadi; odamlar qanday choralar ko'rishni bilmaydi. AirCare real vaqt AQI ni tahlil qilib, foydalanuvchiga xavfsiz harakatlar bo'yicha aniq, kontekstga mos maslahat beradi.</p>
+
+          <h4>2. Jamoa</h4>
+          <pre class="small">Project Manager — loyiha boshqaruvi, UX
+Frontend — React/Next.js, TailwindCSS
+Backend — Node.js, Express yoki Supabase
+AI Engineer — OpenAI (GPT-5), LangChain, prompt-engineering
+Data Engineer — OpenAQ / Meteostat / Mahalliy API integratsiyasi
+DevOps — Vercel yoki Railway
+Havolalar: GitHub, Figma, LinkedIn</pre>
+
+          <h4>3. Nima uchun biz</h4>
+          <p class="small">Bizda AI integratsiyasi va sog'liq sohasida tajriba bor; tez prototiplash orqali foydalanuvchi sinovlarini o'tkazish va 2 haftada MVP chiqarish mumkin.</p>
+
+          <h4>4. Yo'l xaritasi</h4>
+          <pre class="small">Idea (1-2 kun): talab va maqsad
+Prototype (3-5 kun): frontend + data fetch
+MVP (7-14 kun): autentifikatsiya, bildirishnomalar, AI maslahatlar
+Launched (14+ kun): analytics, lokalizatsiya, hamkorlik (sog'liq markazlari)</pre>
+
+          <h4>5. Amalga oshirish</h4>
+          <pre class="small">Texnologiyalar: Next.js, Tailwind, Node.js, Supabase/Postgres, OpenAI GPT-5, LangChain, Vercel
+AI vositalar: OpenAI (personalized advice), LangChain (agents), Weaviate yoki Supabase Vector DB (historical user data)
+Bosqichlar: dizayn → frontend → backend → AI integratsiya → test → deploy</pre>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h3>Texnik detail va kod skeletlari</h3>
+          <h4>Client-side maslahat logikasi</h4>
+          <pre id="code" class="small">// Bu sahifa ichida quyidagi qoidalar ishlatiladi:
+// AQI range (EPA standard):
+// 0-50 Good, 51-100 Moderate, 101-150 Unhealthy for Sensitive Groups,
+// 151-200 Unhealthy, 201-300 Very Unhealthy, 301-500 Hazardous
+</pre>
+
+          <h4>Server-side: real ma'lumot olish (misol Node.js)</h4>
+          <pre class="small">// server.js (misol)
+// const express = require('express');
+// const fetch = require('node-fetch');
+// app.get('/api/aqi?lat=...&lon=...', async (req,res)=>{
+//   // OpenAQ yoki boshqa API dan ma'lumot olish
+// });</pre>
+
+          <h4>OpenAI integratsiya (misol prompt)</h4>
+          <pre class="small">// Prompt: "User is 65 years old with asthma and current AQI is 135. Give 5 concise health advices in Uzbek."
+// Use OpenAI to personalize recommendations and expand on rule-based advice.</pre>
+
+          <div style="margin-top:10px">
+            <button id="downloadBtn">README yuklab olish</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:14px">
+          <h3>Qanday deploy qilish</h3>
+          <p class="small">index.html ni GitHub repoga qo'ying va GitHub Pages yoki Vercel orqali deploy qiling. Agar siz Next.js talab qilsangiz, men Next.js loyiha skeletini ham bera olaman.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p class="small">© AirCare — Hackathon demo. Siz creativizatsiya qilishingiz mumkin.</p>
+    </footer>
+  </div>
+
+  <script>
+    // AQI kategoriyalari va maslahatlar (rule-based)
+    const categories = [
+      {name:'Good', range:[0,50], advice:['Havo toza, ochiq havoda mashg‘ulotlar uchun xavfsiz.']},
+      {name:'Moderate', range:[51,100], advice:['Sezilarli cheklov yo‘q, ammo sezgir guruhlar ehtiyotkor bo‘lsin.','Agar xuruj sezilsa, tashqariga chiqishni kamaytiring.']},
+      {name:'Unhealthy for Sensitive', range:[101,150], advice:['Keksa odamlar, bolalar va astma kasallari tashqariga chiqishni cheklasin.','Uy ichida havo tozalash vositasidan foydalaning.']},
+      {name:'Unhealthy', range:[151,200], advice:['Barcha odamlar tashqarida faoliyatingizni kamaytiring.','Tibbiy niqob (N95) taktika sifatida ishlatilishi mumkin.']},
+      {name:'Very Unhealthy', range:[201,300], advice:['Tashqariga chiqishni minimumga keltiring, deraza va eshiklarni yoping.','Favqulodda holatlarda tibbiy yordam oling.']},
+      {name:'Hazardous', range:[301,500], advice:['Darhol xavfsiz joyga o‘ting, ochiq havoda bo‘lmaslikka harakat qiling.','Shoshilinch tibbiy yordamni chaqiring agar zarur.']}
+    ];
+
+    function getCategory(aqi){
+      if(aqi === null || isNaN(aqi)) return null;
+      for(const c of categories){
+        if(aqi >= c.range[0] && aqi <= c.range[1]) return c;
+      }
+      return {name:'Unknown', advice:['AQI qiymati diapazonidan tashqarida.']};
+    }
+
+    function renderAdvice(aqi, pm25){
+      const cat = getCategory(aqi);
+      if(!cat) return `<p class='small'>Iltimos AQI ni to'g'ri kiriting.</p>`;
+      let html = `<div><strong class='badge'>${cat.name}</strong><p class='small'>AQI: ${aqi}${pm25?', PM2.5: '+pm25+" µg/m³":''}</p>`;
+      html += '<ul class="small">';
+      for(const adv of cat.advice) html += `<li>${adv}</li>`;
+      html += '</ul>';
+      html += `<p class='small'><em>Shaxsiylashtirish uchun OpenAI integratsiyasini yoqing (misol: foydalanuvchi yoshi, kasalliklari) — demo sahifada kommentariyalar mavjud.</em></p>`;
+      html += '</div>';
+      return html;
+    }
+
+    document.getElementById('checkBtn').addEventListener('click', ()=>{
+      const aqiVal = Number(document.getElementById('aqi').value);
+      const pm25Val = document.getElementById('pm25').value ? Number(document.getElementById('pm25').value) : null;
+      const res = renderAdvice(aqiVal, pm25Val);
+      document.getElementById('result').innerHTML = res;
+      // Save for README
+      window.__readmeContent = makeReadme(aqiVal, pm25Val);
+    });
+
+    document.getElementById('sampleBtn').addEventListener('click', ()=>{
+      document.getElementById('aqi').value = 135;
+      document.getElementById('pm25').value = 56.2;
+      document.getElementById('checkBtn').click();
+    });
+
+    function makeReadme(aqi,pm25){
+      const cat = getCategory(Number(aqi)) || {name:'Unknown'};
+      return `# AirCare
+
+## Demo natija
+AQI: ${aqi}
+PM2.5: ${pm25 || '—'}
+Kategoriya: ${cat.name}
+
+## Maslahatlar
+${(cat.advice||[]).map(a=>'- '+a).join('
+')}
+
+## Texnologiyalar
+- Frontend: HTML/CSS/JS (demo)
+- Tavsiya: Next.js, TailwindCSS
+- Backend (rejalashtirilgan): Node.js/Express yoki Supabase
+- AI: OpenAI GPT-5 (personalized advice), LangChain
+
+## Qanday ishlaydi
+1) AQI qiymati kiritiladi (yoki API orqali olinadi)
+2) Rule-based maslahatlar chiqariladi
+3) OpenAI orqali foydalanuvchi kontekstiga mos kengaytirilgan maslahatlar olinadi (opsional)
+
+## Kontakt
+- GitHub: https://github.com/your-team
+`;
+    }
+
+    document.getElementById('downloadBtn').addEventListener('click', ()=>{
+      const content = window.__readmeContent || 'README hali yaratilmagan. Avval AQI qiymatini tekshiring.';
+      const blob = new Blob([content], {type:'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href=url; a.download='README_AirCare.md'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+  </script>
+</body>
+</html>
